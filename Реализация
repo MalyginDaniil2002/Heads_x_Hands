@@ -1,0 +1,138 @@
+#include <iostream>
+using namespace std;
+
+
+class Creature
+{
+private:
+    int attack_point, defense_point, current_health_point, max_health_point, damage_points_count, * damage_points;
+public:
+    Creature(int attack_point, int defense_point, int max_health_point, int m, int n) : attack_point{ attack_point }, defense_point{ defense_point },
+        current_health_point{ max_health_point }
+    {
+        int i;
+        if (m > n)
+            this->damage_points_count = m - n + 1;
+        else
+            this->damage_points_count = n - m + 1;
+        this->damage_points = new int[damage_points_count];
+        for (i = 0; i < damage_points_count; i++)
+        {
+            if (m > n)
+                damage_points[i] = n + i;
+            else
+                damage_points[i] = m + i;
+        }
+    }
+    int get_attack_point()
+    {
+        return this->attack_point;
+    };
+    int get_defense_point()
+    {
+        return this->defense_point;
+    };
+    int get_health_point()
+    {
+        return this->current_health_point;
+    };
+    int get_damage_point()
+    {
+        int index = int(double(rand()) / (RAND_MAX + 1) * this->damage_points_count);
+        return damage_points[index];
+    };
+    void set_health_point(int change)
+    {
+        this->current_health_point = current_health_point + change;
+    };
+    void attack_enemy(Creature* object)
+    {
+        bool success_check = false;
+        int value = 0;
+        int modificator = this->attack_point - object->get_defense_point() + 1;
+        for (int i = 0; i < modificator; i++)
+        {
+            value = int(double(rand()) / (RAND_MAX + 1) * 6) + 1;
+            if (value == 5 or value == 6)
+            {
+                success_check = true;
+                break;
+            }
+        }
+        if (success_check)
+        {
+            object->set_health_point(-this->get_damage_point());
+            object->death_check();
+        }
+    };
+    void death_check()
+    {
+        if (this->current_health_point == 0)
+        {
+            this->~Creature();
+            cout << "Существо мертво!";
+        }
+    };
+    ~Creature()
+    {
+        if (this->damage_points != nullptr)
+        {
+            delete[] this->damage_points;
+            damage_points = nullptr;
+        }
+    };
+};
+
+
+class Monster : public Creature
+{
+private:
+    int attack_point, defense_point, current_health_point, max_health_point, damage_points_count, * damage_points;
+public:
+    Monster(int attack_point, int defense_point, int max_health_point, int m, int n) :
+        Creature(attack_point, defense_point, max_health_point, m, n)
+    {};
+    ~Monster()
+    {};
+
+};
+
+
+class Player : public Creature
+{
+private:
+    int max_health_point, heal_count = 4;
+public:
+    Player(int attack_point, int defense_point, int max_health_point, int m, int n) : max_health_point{ max_health_point },
+        Creature(attack_point, defense_point, max_health_point, m, n)
+    {};
+    void healing()
+    {
+        if (heal_count != 0)
+        {
+            float get_point = 0.3 * this->max_health_point;
+            if ((this->get_health_point() + get_point) <= this->max_health_point)
+                this->set_health_point(get_point);
+            else
+                this->set_health_point(this->max_health_point-this->get_health_point());
+            heal_count--;
+        }
+    }
+    ~Player()
+    {};
+
+};
+
+
+int main()
+{
+    setlocale(LC_ALL, "RUSSIAN");
+    Player Claud{ 10, 8, 10, 10, 12 };
+    Monster Werewolf{ 25, 22, 10, 4, 6 };
+    cout << "Здоровье игрока: " << Claud.get_health_point() << "\n";
+    Werewolf.attack_enemy(&Claud);
+    cout << "Здоровье игрока: " << Claud.get_health_point() << "\n";
+    Claud.healing();
+    cout << "Здоровье игрока: " << Claud.get_health_point() << "\n";
+    return 0;
+}
